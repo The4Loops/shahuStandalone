@@ -10,3 +10,8 @@ build/
 # Misc
 .DS_Store
 "node_modules/" 
+node_modules/
+dist/
+build/
+.env
+.DS_Store
