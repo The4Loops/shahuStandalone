@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import Confetti from 'react-confetti';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 // Utility function to validate email format
 const isValidEmail = (email) => {
@@ -13,6 +12,7 @@ const App = () => {
   const [isError, setIsError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
 
   const ArrowRightIcon = (props) => (
     <svg
@@ -53,7 +53,8 @@ const App = () => {
         setMessage('Thank you! Your invitation request has been received.');
         setIsError(false);
         setEmail('');
-        setShowPopup(true); // Show congratulatory popup
+        setShowPopup(true);
+        setFadeOut(false);
       } catch (error) {
         setIsError(true);
         setMessage('Oops! Something went wrong. Please try again later.');
@@ -63,6 +64,17 @@ const App = () => {
     },
     [email]
   );
+
+  // Auto close popup after 3 seconds with fade-out
+  useEffect(() => {
+    if (showPopup) {
+      const timer = setTimeout(() => {
+        setFadeOut(true);
+        setTimeout(() => setShowPopup(false), 600); // wait for fade-out animation
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showPopup]);
 
   const messageClasses = useMemo(
     () =>
@@ -138,28 +150,55 @@ const App = () => {
         {message}
       </div>
 
-      {/* Congratulatory Popup with Full-Page Confetti */}
+      {/* Popup with fade-in + fade-out */}
       {showPopup && (
-        <>
-          <Confetti recycle={false} numberOfPieces={500} width={window.innerWidth} height={window.innerHeight} />
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="relative bg-[#fcfaf7] border border-[#a58c74] rounded-xl p-8 max-w-sm text-center shadow-lg">
-              <h2 className="text-2xl font-semibold text-[#3e2f2f] mb-4">
-                🎉 Congratulations!
-              </h2>
-              <p className="text-[#5c5346] mb-6">
-                Your invitation request has been received.
-              </p>
-              <button
-                onClick={() => setShowPopup(false)}
-                className="px-6 py-2 bg-[#f5e6e8] hover:bg-[#edd2d6] text-[#3e2f2f] rounded-lg transition"
-              >
-                Close
-              </button>
-            </div>
+        <div
+          className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 transition-opacity duration-600 ${
+            fadeOut ? 'opacity-0' : 'opacity-100'
+          }`}
+        >
+          <div
+            className={`relative bg-[#fcfaf7] border border-[#a58c74] rounded-xl p-8 max-w-sm text-center shadow-lg transition-transform duration-600 ${
+              fadeOut ? 'scale-90 opacity-0' : 'scale-100 opacity-100'
+            }`}
+          >
+            <h2 className="text-2xl font-semibold text-[#3e2f2f] mb-4">
+              Congratulations!
+            </h2>
+            <p className="text-[#5c5346] mb-6">
+              Your invitation request has been received.
+            </p>
+            <button
+              onClick={() => setShowPopup(false)}
+              className="px-6 py-2 bg-[#f5e6e8] hover:bg-[#edd2d6] text-[#3e2f2f] rounded-lg transition"
+            >
+              Close
+            </button>
           </div>
-        </>
+        </div>
       )}
+
+      {/* Extra animations */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.6s ease-out forwards;
+          }
+          @keyframes draw {
+            from { stroke-dasharray: 0, 100; }
+            to { stroke-dasharray: 100, 0; }
+          }
+          .animate-draw {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: draw 0.8s ease-out forwards;
+          }
+        `}
+      </style>
     </div>
   );
 };
