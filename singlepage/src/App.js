@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { subscribeToInvite } from './api/subscribe';
 
 // Utility function to validate email format
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const App = () => {
   const [email, setEmail] = useState('');
@@ -15,55 +13,40 @@ const App = () => {
   const [fadeOut, setFadeOut] = useState(false);
 
   const ArrowRightIcon = (props) => (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+      viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 12h14" />
       <path d="m12 5 7 7-7 7" />
     </svg>
   );
 
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault();
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    setMessage(null);
+    setIsError(false);
 
-      setMessage(null);
+    if (!isValidEmail(email)) {
+      setIsError(true);
+      setMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await subscribeToInvite(email, ''); // pass a name if you capture it
+      setMessage('Thank you! Your invitation request has been received.');
       setIsError(false);
-
-      if (!isValidEmail(email)) {
-        setIsError(true);
-        setMessage('Please enter a valid email address.');
-        return;
-      }
-
-      setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      try {
-        console.log(`Submitting email: ${email}`);
-        setMessage('Thank you! Your invitation request has been received.');
-        setIsError(false);
-        setEmail('');
-        setShowPopup(true);
-        setFadeOut(false);
-      } catch (error) {
-        setIsError(true);
-        setMessage('Oops! Something went wrong. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [email]
-  );
+      setEmail('');
+      setShowPopup(true);
+      setFadeOut(false);
+    } catch (error) {
+      setIsError(true);
+      setMessage(error.message || 'Oops! Something went wrong. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email]);
 
   // Auto close popup after 3 seconds with fade-out
   useEffect(() => {
@@ -121,10 +104,7 @@ const App = () => {
             type="email"
             placeholder="Email address"
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (message) setMessage(null);
-            }}
+            onChange={(e) => { setEmail(e.target.value); if (message) setMessage(null); }}
             disabled={isLoading}
             className="flex-grow p-3 text-base bg-transparent focus:outline-none placeholder-[#9a8c7c] text-[#3e2f2f] disabled:opacity-50"
             aria-label="Email address for invitation"
@@ -177,28 +157,6 @@ const App = () => {
           </div>
         </div>
       )}
-
-      {/* Extra animations */}
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-          }
-          .animate-fadeIn {
-            animation: fadeIn 0.6s ease-out forwards;
-          }
-          @keyframes draw {
-            from { stroke-dasharray: 0, 100; }
-            to { stroke-dasharray: 100, 0; }
-          }
-          .animate-draw {
-            stroke-dasharray: 100;
-            stroke-dashoffset: 100;
-            animation: draw 0.8s ease-out forwards;
-          }
-        `}
-      </style>
     </div>
   );
 };
