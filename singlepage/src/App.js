@@ -78,7 +78,7 @@ const App = () => {
     >
       {/* Title */}
       <h1
-        className="text-6xl md:text-7xl text-[#3e2f2f] tracking-wide"
+        className="text-6xl md:text-7xl text-center text-[#3e2f2f] tracking-wide"
         style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontWeight: '400' }}
       >
         Shahu Mumbai
