@@ -42,8 +42,8 @@
     top: 50px !important;
     right: 15px !important;
     left: auto !important;
-    width: auto !important;
-    max-width: 400px !important;
+    width: 300px !important;
+    max-width: 500px !important;
   }
 
   .Toastify__toast {

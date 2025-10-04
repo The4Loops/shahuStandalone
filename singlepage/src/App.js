@@ -4,6 +4,7 @@ import HomePage from './HomePage';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminPage from './AdminPage';
+import './App.css';
 
 const App = () => {
   return (

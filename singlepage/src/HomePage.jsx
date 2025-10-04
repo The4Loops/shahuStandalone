@@ -1,71 +1,77 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { toast } from 'react-toastify'; // Import react-toastify
 import { subscribeToInvite } from '../src/api/subscribe';
 
 // Utility function to validate email format
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 function HomePage() {
-    const [email, setEmail] = useState('');
-      const [message, setMessage] = useState(null);
-      const [isError, setIsError] = useState(false);
-      const [isLoading, setIsLoading] = useState(false);
-      const [showPopup, setShowPopup] = useState(false);
-      const [fadeOut, setFadeOut] = useState(false);
-    
-      const ArrowRightIcon = (props) => (
-        <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14" />
-          <path d="m12 5 7 7-7 7" />
-        </svg>
-      );
-    
-      const handleSubmit = useCallback(async (e) => {
-        e.preventDefault();
-        setMessage(null);
-        setIsError(false);
-    
-        if (!isValidEmail(email)) {
-          setIsError(true);
-          setMessage('Please enter a valid email address.');
-          return;
-        }
-    
-        setIsLoading(true);
-        try {
-          await subscribeToInvite(email, ''); // pass a name if you capture it
-          setMessage('Thank you! Your invitation request has been received.');
-          setIsError(false);
-          setEmail('');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  const ArrowRightIcon = (props) => (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+
+      if (!isValidEmail(email)) {
+        toast.error('Please enter a valid email address.', {
+          position: 'top-right',
+          autoClose: 4000,
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await subscribeToInvite(email, '');
+        toast.dismiss();
+        toast.success(response.message || 'Thank you! Your invitation request has been received.');
+        setEmail('');
+        if(response.message !== "Email already registered"){
           setShowPopup(true);
           setFadeOut(false);
-        } catch (error) {
-          setIsError(true);
-          setMessage(error.message || 'Oops! Something went wrong. Please try again later.');
-        } finally {
-          setIsLoading(false);
         }
-      }, [email]);
-    
-      // Auto close popup after 3 seconds with fade-out
-      useEffect(() => {
-        if (showPopup) {
-          const timer = setTimeout(() => {
-            setFadeOut(true);
-            setTimeout(() => setShowPopup(false), 600); // wait for fade-out animation
-          }, 3000);
-          return () => clearTimeout(timer);
-        }
-      }, [showPopup]);
-    
-      const messageClasses = useMemo(
-        () =>
-          `mt-4 text-center transition-opacity duration-300 ${
-            message ? 'opacity-100' : 'opacity-0 h-0'
-          } ${isError ? 'text-red-700' : 'text-rose-700'}`,
-        [message, isError]
-      );
+      } catch (error) {
+        toast.dismiss();
+        toast.error(error.message || 'Oops! Something went wrong. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [email]
+  );
+
+  // Auto close popup after 3 seconds with fade-out
+  useEffect(() => {
+    if (showPopup) {
+      const timer = setTimeout(() => {
+        setFadeOut(true);
+        setTimeout(() => setShowPopup(false), 600); // wait for fade-out animation
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showPopup]);
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6 font-serif relative"
@@ -103,12 +109,11 @@ function HomePage() {
             type="email"
             placeholder="Email address"
             value={email}
-            onChange={(e) => { setEmail(e.target.value); if (message) setMessage(null); }}
+            onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
             className="flex-grow p-3 text-base bg-transparent focus:outline-none placeholder-[#9a8c7c] text-[#3e2f2f] disabled:opacity-50"
             aria-label="Email address for invitation"
           />
-
           <button
             type="submit"
             disabled={isLoading}
@@ -124,11 +129,6 @@ function HomePage() {
         </div>
       </form>
 
-      {/* Status Message */}
-      <div className={messageClasses} role="status">
-        {message}
-      </div>
-
       {/* Popup with fade-in + fade-out */}
       {showPopup && (
         <div
@@ -141,12 +141,8 @@ function HomePage() {
               fadeOut ? 'scale-90 opacity-0' : 'scale-100 opacity-100'
             }`}
           >
-            <h2 className="text-2xl font-semibold text-[#3e2f2f] mb-4">
-              Congratulations!
-            </h2>
-            <p className="text-[#5c5346] mb-6">
-              Your invitation request has been received.
-            </p>
+            <h2 className="text-2xl font-semibold text-[#3e2f2f] mb-4">Congratulations!</h2>
+            <p className="text-[#5c5346] mb-6">Your invitation request has been received.</p>
             <button
               onClick={() => setShowPopup(false)}
               className="px-6 py-2 bg-[#f5e6e8] hover:bg-[#edd2d6] text-[#3e2f2f] rounded-lg transition"
@@ -157,7 +153,7 @@ function HomePage() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default HomePage
+export default HomePage;
