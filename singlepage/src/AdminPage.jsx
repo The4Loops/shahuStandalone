@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { login, getInviteRequests } from './api/subscribe';
 import { jwtDecode } from 'jwt-decode';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
 function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -11,6 +12,9 @@ function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [inviteRequests, setInviteRequests] = useState([]);
   const [dataError, setDataError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
 
   // Check for existing token on mount and validate
   useEffect(() => {
@@ -18,7 +22,6 @@ function AdminPage() {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Check if token is expired
         const currentTime = Date.now() / 1000;
         if (decoded.exp < currentTime) {
           localStorage.removeItem('authToken');
@@ -26,7 +29,6 @@ function AdminPage() {
           setShowModal(true);
           return;
         }
-        // Check if user has Admin role
         if (decoded.role === 'Admin') {
           setIsLoggedIn(true);
           setShowModal(false);
@@ -74,12 +76,10 @@ function AdminPage() {
       const token = response.token;
       const decoded = jwtDecode(token);
 
-      // Check if user has Admin role
       if (decoded.role !== 'Admin') {
         throw new Error('Access denied: Admin role required');
       }
 
-      // Store token in localStorage
       localStorage.setItem('authToken', token);
       setIsLoggedIn(true);
       setShowModal(false);
@@ -100,6 +100,32 @@ function AdminPage() {
     setPassword('');
     setInviteRequests([]);
     setDataError('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  // Search logic
+  const filteredRequests = useMemo(() => {
+    return inviteRequests.filter(row => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        String(row.FullName || '').toLowerCase().includes(searchLower) ||
+        String(row.Email || '').toLowerCase().includes(searchLower) ||
+        String(row.Source || '').toLowerCase().includes(searchLower) ||
+        String(row.Status || '').toLowerCase().includes(searchLower)
+      );
+    });
+  }, [inviteRequests, searchTerm]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredRequests.length / pageSize);
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -153,6 +179,21 @@ function AdminPage() {
       {isLoggedIn && (
         <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">Admin Dashboard</h1>
+          
+          {/* Search Bar */}
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Search all fields..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full max-w-md px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
           {dataError && <p className="text-red-500 mb-6 text-center">{dataError}</p>}
           <div className="bg-white shadow-lg rounded-xl overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
@@ -192,7 +233,7 @@ function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {inviteRequests.map((row) => (
+                  {paginatedRequests.map((row) => (
                     <tr key={row.Id} className="hover:bg-blue-50 transition-colors duration-150">
                       <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-700">{row.Id}</td>
                       <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900 font-medium text-center">
@@ -218,6 +259,28 @@ function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            {/* Pagination Controls */}
+            <div className="flex justify-between items-center px-6 py-4 bg-gray-50">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-700 transition-colors duration-200"
+                title="Previous Page"
+              >
+                <FaArrowLeft size={20} />
+              </button>
+              <span className="text-sm text-gray-700">
+                Page {currentPage} of {totalPages} ({filteredRequests.length} total records)
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300 hover:bg-blue-700 transition-colors duration-200"
+                title="Next Page"
+              >
+                <FaArrowRight size={20} />
+              </button>
             </div>
           </div>
           <button
