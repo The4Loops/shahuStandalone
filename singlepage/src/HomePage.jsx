@@ -61,12 +61,12 @@ function HomePage() {
     [email]
   );
 
-  // Auto close popup after 3 seconds with fade-out
+
   useEffect(() => {
     if (showPopup) {
       const timer = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setShowPopup(false), 600); // wait for fade-out animation
+        setTimeout(() => setShowPopup(false), 600); 
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -84,18 +84,18 @@ function HomePage() {
       {/* Title */}
       <h1
         className="text-6xl md:text-7xl text-center text-[#3e2f2f] tracking-wide"
-        style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontWeight: '400' }}
+        style={{ fontSize: '96px', fontFamily: 'Kunstler Script, serif', fontStyle: 'italic', fontWeight: '500' }}
       >
         Shahu Mumbai
       </h1>
 
       {/* Subtitle */}
       <div className="mt-10 mb-8 text-center max-w-md">
-        <p className="text-[#5c5346] text-lg font-light leading-relaxed">
-          The quiet return of timeless fashion.
+        <p className="text-[#5c5346] text-lg font-light leading-relaxed" style={{ fontFamily: 'Lucida Handwriting, serif'}}>
+          Bringing the Indian Heritage to you.
         </p>
-        <p className="text-[#5c5346] text-lg font-light leading-relaxed mt-2">
-          Receive your invitation to the launch.
+        <p className="text-[#5c5346] text-lg font-light leading-relaxed mt-2" style={{ fontFamily: 'Lucida Handwriting, serif'}}>
+          Receive your invitation.
         </p>
       </div>
 
