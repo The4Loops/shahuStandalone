@@ -44,8 +44,11 @@ function HomePage() {
       setIsLoading(true);
       try {
         const response = await subscribeToInvite(email, '');
-        toast.dismiss();
-        toast.success(response.message || 'Thank you! Your invitation request has been received.');
+        if(response.message === "Email already registered")
+        {
+          toast.dismiss();
+          toast.warning(response.message);
+        }
         setEmail('');
         if(response.message !== "Email already registered"){
           setShowPopup(true);
