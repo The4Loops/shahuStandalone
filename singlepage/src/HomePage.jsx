@@ -2,10 +2,45 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { subscribeToInvite } from '../src/api/subscribe';
 
+// --- Lightweight font loader (no index.html required) ---
+function useGoogleFonts(hrefs) {
+  useEffect(() => {
+    const added = [];
+    // Preconnects (helps on mobile)
+    ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'].forEach((href) => {
+      const l = document.createElement('link');
+      l.rel = 'preconnect';
+      l.href = href;
+      if (href.includes('gstatic')) l.crossOrigin = 'anonymous';
+      document.head.appendChild(l);
+      added.push(l);
+    });
+
+    // Stylesheet(s)
+    hrefs.forEach((href) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      document.head.appendChild(link);
+      added.push(link);
+    });
+
+    return () => {
+      added.forEach((el) => document.head.removeChild(el));
+    };
+  }, [hrefs]);
+}
+
 // Email validator
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 function HomePage() {
+  // Load web fonts (script + handwriting)
+  useGoogleFonts([
+    'https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap',
+    'https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap',
+  ]);
+
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -76,10 +111,11 @@ function HomePage() {
         min-h-screen
         flex flex-col items-center justify-center
         p-4 sm:p-6
-        font-serif
         relative
       "
       style={{
+        // keep system serif as a base; we’ll use custom fonts selectively below
+        fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
         backgroundColor: '#f8f5f0',
         backgroundImage:
           'repeating-linear-gradient(45deg, #fdfdfb 0, #fdfdfb 20px, #fcfaf7 20px, #fcfaf7 40px)',
@@ -96,32 +132,34 @@ function HomePage() {
           select-none
         "
         style={{
-          // scales from ~44px on small screens up to ~96px on large
-          fontSize: 'clamp(2.75rem, 6vw, 6rem)',
-          fontFamily: 'Kunstler Script, serif',
-          fontStyle: 'italic',
-          fontWeight: 500,
+          fontFamily: '"Great Vibes", ui-serif, Georgia, serif',
+          fontSize: 'clamp(2.8rem, 9vw, 5.5rem)', // scale a bit more aggressively on small screens
+          fontWeight: 400,
+          lineHeight: 1.05,
+          letterSpacing: '0.01em',
         }}
       >
         Shahu Mumbai
       </h1>
 
       {/* Subtitle */}
-      <div className="mt-6 sm:mt-8 mb-6 sm:mb-8 text-center w-full max-w-md px-2">
+      <div className="mt-5 sm:mt-6 mb-6 sm:mb-8 text-center w-full max-w-md px-2">
         <p
           className="text-[#5c5346] leading-relaxed"
           style={{
-            fontFamily: 'Lucida Handwriting, serif',
-            fontSize: 'clamp(0.95rem, 2.8vw, 1.125rem)', // ~15–18px
+            fontFamily: '"Caveat", ui-rounded, "Segoe UI", Roboto, system-ui, -apple-system, sans-serif',
+            fontSize: 'clamp(1.05rem, 4vw, 1.25rem)', // ~17–20px
+            fontWeight: 600,
           }}
         >
           Bringing the Indian Heritage to you.
         </p>
         <p
-          className="text-[#5c5346] leading-relaxed mt-2"
+          className="text-[#5c5346] leading-relaxed mt-1.5"
           style={{
-            fontFamily: 'Lucida Handwriting, serif',
-            fontSize: 'clamp(0.95rem, 2.8vw, 1.125rem)',
+            fontFamily: '"Caveat", ui-rounded, "Segoe UI", Roboto, system-ui, -apple-system, sans-serif',
+            fontSize: 'clamp(1.05rem, 4vw, 1.25rem)',
+            fontWeight: 600,
           }}
         >
           Receive your invitation.
@@ -133,7 +171,7 @@ function HomePage() {
         onSubmit={handleSubmit}
         className="
           w-full
-          max-w-[28rem]   /* ~448px on larger screens */
+          max-w-[28rem]
           rounded-xl border border-[#a58c74]
           bg-[#fcfaf7] shadow-sm overflow-hidden
           px-2
@@ -157,12 +195,12 @@ function HomePage() {
               text-[#3e2f2f]
               disabled:opacity-50
               px-3 py-3
-              text-base
-              sm:text-lg
+              text-base sm:text-lg
             "
             style={{
-              // Keep >=16px to prevent iOS zoom on focus
+              // >=16px prevents iOS zoom on focus; clamp for mobile scaling
               fontSize: 'clamp(1rem, 3.8vw, 1.125rem)',
+              minHeight: 48, // good touch target on mobile
             }}
             aria-label="Email address for invitation"
           />
@@ -177,6 +215,7 @@ function HomePage() {
               disabled:opacity-40 disabled:cursor-not-allowed
               flex items-center justify-center
             "
+            style={{ minWidth: 56, minHeight: 48 }} // comfortable tap target
             aria-label="Submit email"
           >
             {isLoading ? (
@@ -201,13 +240,18 @@ function HomePage() {
               rounded-xl shadow-lg text-center
               transition-transform duration-500
               ${fadeOut ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}
-              w-[90%] max-w-sm p-6 sm:p-8
+              w-[92%] max-w-sm p-6 sm:p-8
             `}
             role="dialog"
             aria-modal="true"
             aria-labelledby="invite-confirmation-title"
+            style={{ fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif' }}
           >
-            <h2 id="invite-confirmation-title" className="text-xl sm:text-2xl font-semibold text-[#3e2f2f] mb-3 sm:mb-4">
+            <h2
+              id="invite-confirmation-title"
+              className="text-xl sm:text-2xl font-semibold text-[#3e2f2f] mb-3 sm:mb-4"
+              style={{ fontFamily: '"Caveat", ui-rounded, "Segoe UI", system-ui, sans-serif' }}
+            >
               Congratulations!
             </h2>
             <p className="text-[#5c5346] mb-5 sm:mb-6 text-sm sm:text-base">
@@ -222,6 +266,7 @@ function HomePage() {
                 text-[#3e2f2f]
                 rounded-lg transition
               "
+              style={{ minHeight: 44 }}
             >
               Close
             </button>
